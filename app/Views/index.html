@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Golden Sports</title>
+    <style>
+        #pitch {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-color: green;
+            margin: 20px auto;
+        }
+
+        .player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: red;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            color: white;
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+<center>
+    <button onclick="addPlayer()">Add New Player</button>
+</center>
+<div id="pitch"></div>
+
+<script>
+    var playerId = 1;
+    var players = [];
+
+    var conn = new WebSocket('ws://127.0.0.1:8080');
+    conn.onopen = function(e) {
+        console.log("Connection established!");
+    };
+
+    conn.onmessage = function(e) {
+        var location = e.data;
+        createPlayer(location);
+    };
+
+    function addPlayer() {
+        var pitch = document.getElementById('pitch');
+        var pitchRect = pitch.getBoundingClientRect();
+        var randomLeft = Math.floor(Math.random() * (pitchRect.width - 40));
+        var randomTop = Math.floor(Math.random() * (pitchRect.height - 40));
+        var location = randomLeft + ',' + randomTop;
+
+        createPlayer(location);
+
+        // Send the player location to the server via WebSocket
+        conn.send(location);
+    }
+
+    function createPlayer(location) {
+        var player = document.createElement('div');
+        player.className = 'player';
+        player.id = 'player_' + playerId;
+        player.draggable = true;
+        player.ondragstart = function(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        };
+
+        player.innerHTML = playerId.toString();
+
+        var pitch = document.getElementById('pitch');
+        var [left, top] = location.split(',');
+        player.style.left = left + "px";
+        player.style.top = top + "px";
+
+        pitch.appendChild(player);
+        players.push(playerId);
+
+        playerId++;
+    }
+</script>
+</body>
+</html>
+
